@@ -60,7 +60,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
   const subscribe = (key: string, callback: Function, errback?: Function) => {
     callbacks[key] = callbacks[key] || [];
     callbacks[key].push(callback);
-    callback(currentData[key]);
+    readyPromise.then(() => callback(currentData[key]));
     if (errback) {
       errbacks.add(errback);
     }
