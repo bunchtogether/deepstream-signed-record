@@ -151,4 +151,6 @@ test('Should overwrite if record signature is wrong.', async () => {
   });
   await record.set(propertyNameA, propertyValueA);
   expect(dsRecord.get()).not.toContain(propertyNameB);
+  dsRecord.discard();
+  await record.discard();
 });
