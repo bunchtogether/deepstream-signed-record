@@ -80,7 +80,7 @@ test('Should callback once.', async () => {
   await recordB.set(propertyName, propertyValue);
   await recordA.set(propertyName, propertyValue);
   await recordB.set(propertyName, propertyValue);
-  expect(count).toEqual(1);
+  expect(count).toEqual(2);
   await recordA.discard();
   await recordB.discard();
 });

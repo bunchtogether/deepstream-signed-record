@@ -60,9 +60,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
   const subscribe = (key: string, callback: Function, errback?: Function) => {
     callbacks[key] = callbacks[key] || [];
     callbacks[key].push(callback);
-    if (record.isReady) {
-      callback(currentData[key]);
-    }
+    readyPromise.then(() => callback(currentData[key]));
     if (errback) {
       errbacks.add(errback);
     }
@@ -82,7 +80,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
     await readyPromise;
     let remoteValue = record.get();
     if (Object.keys(remoteValue).length > 0 && remoteValue.signature !== await getSignature(remoteValue)) {
-      console.error(`Invalid signature for record ${name}, clearing.`);
+      console.error(`Invalid signature for record ${name}, clearing.`); // eslint-disable-line no-console
       remoteValue = {};
     }
     const data = Object.assign({}, remoteValue, defaultValue, {
