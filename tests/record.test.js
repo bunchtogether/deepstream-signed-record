@@ -122,3 +122,33 @@ test('Should fail if private keys do not match.', async () => {
   await recordB.discard();
 });
 
+test('Should overwrite if record signature is wrong.', async () => {
+  const name = uuid.v4();
+  const propertyNameA = uuid.v4();
+  const propertyValueA = uuid.v4();
+  const propertyNameB = uuid.v4();
+  const propertyValueB = uuid.v4();
+  const dsRecord = clientA.record.getRecord(name);
+  const privateKey = await new Promise((resolve, reject) => {
+    libp2pCrypto.keys.generateKeyPair('RSA', 1024, (error, key) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(key);
+      }
+    });
+  });
+  const record = signedRecord(clientA, name, privateKey);
+  await record.set(propertyNameA, propertyValueA);
+  await new Promise((resolve, reject) => {
+    dsRecord.set(propertyNameB, propertyValueB, (errorMessage:string) => {
+      if (errorMessage) {
+        reject(new Error(errorMessage));
+      } else {
+        resolve();
+      }
+    });
+  });
+  await record.set(propertyNameA, propertyValueA);
+  expect(dsRecord.get()).not.toContain(propertyNameB);
+});

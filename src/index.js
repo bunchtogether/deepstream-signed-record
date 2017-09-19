@@ -17,23 +17,27 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
   });
   const callbacks = {};
   const errbacks = new Set([]);
+  const getSignature = (value: Object) => {
+    const data = Object.assign({}, value);
+    delete data.signature;
+    const pairs = Object.keys(data).map((key) => [key, data[key]]);
+    pairs.sort((x, y) => (x[0] > y[0] ? 1 : -1));
+    return new Promise((resolve, reject) => {
+      privateKey.sign(JSON.stringify(pairs), (error, signature) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(signature.toString('base64'));
+      });
+    });
+  };
   record.subscribe(async (value:Object) => {
     try {
       const data = Object.assign({}, value);
       const signature = data.signature;
       delete data.signature;
-      const pairs = Object.keys(data).map((k) => [k, data[k]]);
-      pairs.sort((x, y) => (x[0] > y[0] ? 1 : -1));
-      const computedSignature = await new Promise((resolve, reject) => {
-        privateKey.sign(JSON.stringify(pairs), (error, s) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve(s.toString('base64'));
-        });
-      });
-      if (signature !== computedSignature) {
+      if (signature !== (await getSignature(data))) {
         throw new Error(`Invalid signature for record ${name}`);
       }
       Object.keys(currentData).forEach((k) => {
@@ -74,22 +78,16 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
   };
   const set = async (key: string, value: any) => {
     await readyPromise;
-    const data = Object.assign({}, record.get(), defaultValue, {
+    let remoteValue = record.get();
+    if (Object.keys(remoteValue).length > 0 && remoteValue.signature !== await getSignature(remoteValue)) {
+      console.error(`Invalid signature for record ${name}, clearing.`);
+      remoteValue = {};
+    }
+    const data = Object.assign({}, remoteValue, defaultValue, {
       publicKey: pemPublicKey,
     });
-    delete data.signature;
     data[key] = value;
-    const pairs = Object.keys(data).map((k) => [k, data[k]]);
-    pairs.sort((x, y) => (x[0] > y[0] ? 1 : -1));
-    data.signature = await new Promise((resolve, reject) => {
-      privateKey.sign(JSON.stringify(pairs), (error, s) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve(s.toString('base64'));
-      });
-    });
+    data.signature = await getSignature(data);
     await new Promise((resolve, reject) => {
       record.set(data, (errorMessage:string) => {
         if (errorMessage) {
