@@ -1,0 +1,15 @@
+{
+  "presets": [
+    "latest",
+    "react",
+    "stage-0"
+  ],
+  "ignore": [],
+  "env": {
+    "test": {
+      "plugins": [
+        "transform-inline-environment-variables",
+      ]
+    }
+  }
+}
