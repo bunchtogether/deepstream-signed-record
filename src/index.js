@@ -37,7 +37,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
       const data = Object.assign({}, value);
       const signature = data.signature;
       delete data.signature;
-      if (signature !== (await getSignature(data))) {
+      if (Object.keys(data).length > 0 && signature !== (await getSignature(data))) {
         throw new Error(`Invalid signature for record ${name}`);
       }
       Object.keys(currentData).forEach((k) => {
