@@ -56,11 +56,13 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
         errback(error);
       }
     }
-  });
+  }, true);
   const subscribe = (key: string, callback: Function, errback?: Function) => {
     callbacks[key] = callbacks[key] || [];
     callbacks[key].push(callback);
-    readyPromise.then(() => callback(currentData[key]));
+    if (record.isReady) {
+      callback(currentData[key]);
+    }
     if (errback) {
       errbacks.add(errback);
     }
