@@ -28,6 +28,7 @@ const run = async () => {
     console.log(value);
   });
   await record.set("example-record-name", "example-record-value");
+  await record.discard();
 }
 
 run();
