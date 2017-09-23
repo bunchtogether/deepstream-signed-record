@@ -1,50 +1,35 @@
 // @flow 
 
 import DeepstreamClient from 'deepstream.io-client-js';
-import libp2pCrypto from 'libp2p-crypto';
-import { jwk2pem } from 'pem-jwk';
-import md5 from 'md5';
 
-export default function (client: DeepstreamClient, name:string, privateKey:libp2pCrypto.keys.supportedKeys.rsa.RsaPrivateKey, defaultValue?: Object = {}) {
+export default function (client: DeepstreamClient, name:string, keyPair:Object, defaultValue?: Object = {}) {
   const record = client.record.getRecord(name);
   const readyPromise = new Promise((resolve, reject) => {
     record.once('ready', resolve);
     record.once('error', reject);
   });
-  const pemPublicKey = jwk2pem(privateKey.public._key); // eslint-disable-line no-underscore-dangle
+  const pemPublicKey = keyPair.exportKey('pkcs1-public-pem');
   let currentData = {};
   readyPromise.then(() => {
     currentData = record.get();
   });
   const callbacks = {};
   const errbacks = new Set([]);
-  const getSignature = (value: Object) => {
+  const getSignature = (value: Object):string => {
     const data = Object.assign({}, value);
     delete data.signature;
     const pairs = Object.keys(data).map((key) => [key, data[key]]);
     pairs.sort((x, y) => (x[0] > y[0] ? 1 : -1));
     const pairString = JSON.stringify(pairs);
-    console.log('Signing', md5(pairString));
-    console.log(pairString);
-    console.log(jwk2pem(privateKey._key)); // eslint-disable-line no-underscore-dangle
-    return new Promise((resolve, reject) => {
-      privateKey.sign(pairString, (error, signature) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const b64signature = signature.toString('base64');
-        console.log(b64signature);
-        resolve(b64signature);
-      });
-    });
+    const signature = keyPair.sign(pairString).toString('base64');
+    return signature;
   };
   record.subscribe(async (value:Object) => {
     try {
       const data = Object.assign({}, value);
       const signature = data.signature;
       delete data.signature;
-      if (Object.keys(data).length > 0 && signature !== (await getSignature(data))) {
+      if (Object.keys(data).length > 0 && signature !== getSignature(data)) {
         throw new Error(`Invalid signature for record ${name}`);
       }
       Object.keys(currentData).forEach((k) => {
@@ -86,7 +71,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
   const set = async (key: string, value: any) => {
     await readyPromise;
     let remoteValue = record.get();
-    if (Object.keys(remoteValue).length > 0 && remoteValue.signature !== await getSignature(remoteValue)) {
+    if (Object.keys(remoteValue).length > 0 && remoteValue.signature !== getSignature(remoteValue)) {
       console.error(`Invalid signature for record ${name}, clearing.`); // eslint-disable-line no-console
       remoteValue = {};
     }
@@ -94,7 +79,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
       publicKey: pemPublicKey,
     });
     data[key] = value;
-    data.signature = await getSignature(data);
+    data.signature = getSignature(data);
     await new Promise((resolve, reject) => {
       record.set(data, (errorMessage:string) => {
         if (errorMessage) {

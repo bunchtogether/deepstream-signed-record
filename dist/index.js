@@ -12,7 +12,7 @@ var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
 
 var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
 
-exports.default = function (client, name, privateKey) {
+exports.default = function (client, name, keyPair) {
   var _this = this;
 
   var defaultValue = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
@@ -22,7 +22,8 @@ exports.default = function (client, name, privateKey) {
     record.once('ready', resolve);
     record.once('error', reject);
   });
-  var pemPublicKey = (0, _pemJwk.jwk2pem)(privateKey.public._key); // eslint-disable-line no-underscore-dangle
+  var pemPublicKey = keyPair.exportKey('pkcs1-public-pem');
+  console.log(pemPublicKey);
   var currentData = {};
   readyPromise.then(function () {
     currentData = record.get();
@@ -39,20 +40,8 @@ exports.default = function (client, name, privateKey) {
       return x[0] > y[0] ? 1 : -1;
     });
     var pairString = JSON.stringify(pairs);
-    console.log('Signing', (0, _md2.default)(pairString));
-    console.log(pairString);
-    console.log((0, _pemJwk.jwk2pem)(privateKey._key)); // eslint-disable-line no-underscore-dangle
-    return new Promise(function (resolve, reject) {
-      privateKey.sign(pairString, function (error, signature) {
-        if (error) {
-          reject(error);
-          return;
-        }
-        var b64signature = signature.toString('base64');
-        console.log(b64signature);
-        resolve(b64signature);
-      });
-    });
+    var signature = keyPair.sign(pairString).toString('base64');
+    return signature;
   };
   record.subscribe(function () {
     var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(value) {
@@ -67,30 +56,15 @@ exports.default = function (client, name, privateKey) {
               signature = data.signature;
 
               delete data.signature;
-              _context.t0 = Object.keys(data).length > 0;
 
-              if (!_context.t0) {
-                _context.next = 11;
-                break;
-              }
-
-              _context.t1 = signature;
-              _context.next = 9;
-              return getSignature(data);
-
-            case 9:
-              _context.t2 = _context.sent;
-              _context.t0 = _context.t1 !== _context.t2;
-
-            case 11:
-              if (!_context.t0) {
-                _context.next = 13;
+              if (!(Object.keys(data).length > 0 && signature !== getSignature(data))) {
+                _context.next = 6;
                 break;
               }
 
               throw new Error('Invalid signature for record ' + name);
 
-            case 13:
+            case 6:
               Object.keys(currentData).forEach(function (k) {
                 if (!data[k] && callbacks[k]) {
                   callbacks[k].forEach(function (callback) {
@@ -106,61 +80,61 @@ exports.default = function (client, name, privateKey) {
                 }
               });
               currentData = data;
-              _context.next = 39;
+              _context.next = 32;
               break;
 
-            case 18:
-              _context.prev = 18;
-              _context.t3 = _context['catch'](0);
+            case 11:
+              _context.prev = 11;
+              _context.t0 = _context['catch'](0);
               _iteratorNormalCompletion = true;
               _didIteratorError = false;
               _iteratorError = undefined;
-              _context.prev = 23;
+              _context.prev = 16;
 
               for (_iterator = errbacks[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                 errback = _step.value;
                 // eslint-disable-line no-restricted-syntax
-                errback(_context.t3);
+                errback(_context.t0);
               }
-              _context.next = 31;
+              _context.next = 24;
               break;
 
-            case 27:
-              _context.prev = 27;
-              _context.t4 = _context['catch'](23);
+            case 20:
+              _context.prev = 20;
+              _context.t1 = _context['catch'](16);
               _didIteratorError = true;
-              _iteratorError = _context.t4;
+              _iteratorError = _context.t1;
 
-            case 31:
-              _context.prev = 31;
-              _context.prev = 32;
+            case 24:
+              _context.prev = 24;
+              _context.prev = 25;
 
               if (!_iteratorNormalCompletion && _iterator.return) {
                 _iterator.return();
               }
 
-            case 34:
-              _context.prev = 34;
+            case 27:
+              _context.prev = 27;
 
               if (!_didIteratorError) {
-                _context.next = 37;
+                _context.next = 30;
                 break;
               }
 
               throw _iteratorError;
 
-            case 37:
-              return _context.finish(34);
+            case 30:
+              return _context.finish(27);
 
-            case 38:
-              return _context.finish(31);
+            case 31:
+              return _context.finish(24);
 
-            case 39:
+            case 32:
             case 'end':
               return _context.stop();
           }
         }
-      }, _callee, _this, [[0, 18], [23, 27, 31, 39], [32,, 34, 38]]);
+      }, _callee, _this, [[0, 11], [16, 20, 24, 32], [25,, 27, 31]]);
     }));
 
     return function (_x2) {
@@ -223,42 +197,18 @@ exports.default = function (client, name, privateKey) {
 
             case 2:
               remoteValue = record.get();
-              _context3.t0 = Object.keys(remoteValue).length > 0;
 
-              if (!_context3.t0) {
-                _context3.next = 10;
-                break;
+              if (Object.keys(remoteValue).length > 0 && remoteValue.signature !== getSignature(remoteValue)) {
+                console.error('Invalid signature for record ' + name + ', clearing.'); // eslint-disable-line no-console
+                remoteValue = {};
               }
-
-              _context3.t1 = remoteValue.signature;
-              _context3.next = 8;
-              return getSignature(remoteValue);
-
-            case 8:
-              _context3.t2 = _context3.sent;
-              _context3.t0 = _context3.t1 !== _context3.t2;
-
-            case 10:
-              if (!_context3.t0) {
-                _context3.next = 13;
-                break;
-              }
-
-              console.error('Invalid signature for record ' + name + ', clearing.'); // eslint-disable-line no-console
-              remoteValue = {};
-
-            case 13:
               data = Object.assign({}, remoteValue, defaultValue, {
                 publicKey: pemPublicKey
               });
 
               data[key] = value;
-              _context3.next = 17;
-              return getSignature(data);
-
-            case 17:
-              data.signature = _context3.sent;
-              _context3.next = 20;
+              data.signature = getSignature(data);
+              _context3.next = 9;
               return new Promise(function (resolve, reject) {
                 record.set(data, function (errorMessage) {
                   if (errorMessage) {
@@ -269,7 +219,7 @@ exports.default = function (client, name, privateKey) {
                 });
               });
 
-            case 20:
+            case 9:
             case 'end':
               return _context3.stop();
           }
@@ -287,15 +237,5 @@ exports.default = function (client, name, privateKey) {
 var _deepstream = require('deepstream.io-client-js');
 
 var _deepstream2 = _interopRequireDefault(_deepstream);
-
-var _libp2pCrypto = require('libp2p-crypto');
-
-var _libp2pCrypto2 = _interopRequireDefault(_libp2pCrypto);
-
-var _pemJwk = require('pem-jwk');
-
-var _md = require('md5');
-
-var _md2 = _interopRequireDefault(_md);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
