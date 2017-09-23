@@ -3,6 +3,7 @@
 import DeepstreamClient from 'deepstream.io-client-js';
 import libp2pCrypto from 'libp2p-crypto';
 import { jwk2pem } from 'pem-jwk';
+import md5 from 'md5';
 
 export default function (client: DeepstreamClient, name:string, privateKey:libp2pCrypto.keys.supportedKeys.rsa.RsaPrivateKey, defaultValue?: Object = {}) {
   const record = client.record.getRecord(name);
@@ -22,11 +23,12 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
     delete data.signature;
     const pairs = Object.keys(data).map((key) => [key, data[key]]);
     pairs.sort((x, y) => (x[0] > y[0] ? 1 : -1));
-    console.log('Signing');
-    console.log(JSON.stringify(pairs));
+    const pairString = JSON.stringify(pairs);
+    console.log('Signing', md5(pairString));
+    console.log(pairString);
     console.log(jwk2pem(privateKey._key)); // eslint-disable-line no-underscore-dangle
     return new Promise((resolve, reject) => {
-      privateKey.sign(JSON.stringify(pairs), (error, signature) => {
+      privateKey.sign(pairString, (error, signature) => {
         if (error) {
           reject(error);
           return;

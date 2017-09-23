@@ -38,11 +38,12 @@ exports.default = function (client, name, privateKey) {
     pairs.sort(function (x, y) {
       return x[0] > y[0] ? 1 : -1;
     });
-    console.log('Signing');
-    console.log(JSON.stringify(pairs));
+    var pairString = JSON.stringify(pairs);
+    console.log('Signing', (0, _md2.default)(pairString));
+    console.log(pairString);
     console.log((0, _pemJwk.jwk2pem)(privateKey._key)); // eslint-disable-line no-underscore-dangle
     return new Promise(function (resolve, reject) {
-      privateKey.sign(JSON.stringify(pairs), function (error, signature) {
+      privateKey.sign(pairString, function (error, signature) {
         if (error) {
           reject(error);
           return;
@@ -292,5 +293,9 @@ var _libp2pCrypto = require('libp2p-crypto');
 var _libp2pCrypto2 = _interopRequireDefault(_libp2pCrypto);
 
 var _pemJwk = require('pem-jwk');
+
+var _md = require('md5');
+
+var _md2 = _interopRequireDefault(_md);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
