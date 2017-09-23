@@ -143,9 +143,6 @@ exports.default = function (client, name, keyPair) {
   var subscribe = function subscribe(key, callback, errback) {
     callbacks[key] = callbacks[key] || [];
     callbacks[key].push(callback);
-    readyPromise.then(function () {
-      return callback(currentData[key]);
-    });
     if (errback) {
       errbacks.add(errback);
     }
