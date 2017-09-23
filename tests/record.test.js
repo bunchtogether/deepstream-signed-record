@@ -3,6 +3,7 @@
 import expect from 'expect';
 import uuid from 'uuid';
 import libp2pCrypto from 'libp2p-crypto';
+import { pem2jwk, jwk2pem } from 'pem-jwk';
 import signedRecord from '../src';
 import { getClient, getServer } from './lib/deepstream';
 
@@ -30,7 +31,7 @@ test('Should sign a record.', async () => {
   };
   const propertyName = uuid.v4();
   const propertyValue = uuid.v4();
-  const privateKey = await new Promise((resolve, reject) => {
+  const privateKeyA = await new Promise((resolve, reject) => {
     libp2pCrypto.keys.generateKeyPair('RSA', 1024, (error, key) => {
       if (error) {
         reject(error);
@@ -39,8 +40,9 @@ test('Should sign a record.', async () => {
       }
     });
   });
-  const recordA = signedRecord(clientA, name, privateKey, defaultValue);
-  const recordB = signedRecord(clientB, name, privateKey, defaultValue);
+  const privateKeyB = new libp2pCrypto.keys.supportedKeys.rsa.RsaPrivateKey(pem2jwk(jwk2pem(privateKeyA._key)), pem2jwk(jwk2pem(privateKeyA.public._key))); // eslint-disable-line no-underscore-dangle
+  const recordA = signedRecord(clientA, name, privateKeyA, defaultValue);
+  const recordB = signedRecord(clientB, name, privateKeyB, defaultValue);
   const valuePromise = new Promise((resolve) => {
     recordB.subscribe(propertyName, (value) => {
       if (value === propertyValue) {
@@ -50,6 +52,49 @@ test('Should sign a record.', async () => {
   });
   await recordA.set(propertyName, propertyValue);
   await valuePromise;
+  await recordA.discard();
+  await recordB.discard();
+});
+
+test('Should sign and add to record.', async () => {
+  const name = uuid.v4();
+  const defaultValue = {
+    [uuid.v4()]: uuid.v4(),
+  };
+  const propertyNameA = uuid.v4();
+  const propertyValueA = uuid.v4();
+  const propertyNameB = uuid.v4();
+  const propertyValueB = uuid.v4();
+  const privateKeyA = await new Promise((resolve, reject) => {
+    libp2pCrypto.keys.generateKeyPair('RSA', 1024, (error, key) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(key);
+      }
+    });
+  });
+  const privateKeyB = new libp2pCrypto.keys.supportedKeys.rsa.RsaPrivateKey(pem2jwk(jwk2pem(privateKeyA._key)), pem2jwk(jwk2pem(privateKeyA.public._key))); // eslint-disable-line no-underscore-dangle
+  const recordA = signedRecord(clientA, name, privateKeyA, defaultValue);
+  const recordB = signedRecord(clientB, name, privateKeyB, defaultValue);
+  const valuePromiseA = new Promise((resolve) => {
+    recordB.subscribe(propertyNameA, (value) => {
+      if (value === propertyValueA) {
+        resolve();
+      }
+    });
+  });
+  await recordA.set(propertyNameA, propertyValueA);
+  await valuePromiseA;
+  const valuePromiseB = new Promise((resolve) => {
+    recordA.subscribe(propertyNameB, (value) => {
+      if (value === propertyValueB) {
+        resolve();
+      }
+    });
+  });
+  await recordB.set(propertyNameB, propertyValueB);
+  await valuePromiseB;
   await recordA.discard();
   await recordB.discard();
 });
@@ -70,6 +115,7 @@ test('Should callback once.', async () => {
       }
     });
   });
+
   const recordA = signedRecord(clientA, name, privateKey, defaultValue);
   const recordB = signedRecord(clientB, name, privateKey, defaultValue);
   let count = 0;
