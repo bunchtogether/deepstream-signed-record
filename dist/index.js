@@ -23,7 +23,6 @@ exports.default = function (client, name, keyPair) {
     record.once('error', reject);
   });
   var pemPublicKey = keyPair.exportKey('pkcs1-public-pem');
-  console.log(pemPublicKey);
   var currentData = {};
   readyPromise.then(function () {
     currentData = record.get();
