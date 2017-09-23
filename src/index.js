@@ -52,7 +52,6 @@ export default function (client: DeepstreamClient, name:string, keyPair:Object, 
   const subscribe = (key: string, callback: Function, errback?: Function) => {
     callbacks[key] = callbacks[key] || [];
     callbacks[key].push(callback);
-    readyPromise.then(() => callback(currentData[key]));
     if (errback) {
       errbacks.add(errback);
     }
