@@ -38,14 +38,18 @@ exports.default = function (client, name, privateKey) {
     pairs.sort(function (x, y) {
       return x[0] > y[0] ? 1 : -1;
     });
-    console.log('Signing', JSON.stringify(pairs), (0, _pemJwk.jwk2pem)(privateKey._key)); // eslint-disable-line no-underscore-dangle
+    console.log('Signing');
+    console.log(JSON.stringify(pairs));
+    console.log((0, _pemJwk.jwk2pem)(privateKey._key)); // eslint-disable-line no-underscore-dangle
     return new Promise(function (resolve, reject) {
       privateKey.sign(JSON.stringify(pairs), function (error, signature) {
         if (error) {
           reject(error);
           return;
         }
-        resolve(signature.toString('base64'));
+        var b64signature = signature.toString('base64');
+        console.log(b64signature);
+        resolve(b64signature);
       });
     });
   };
