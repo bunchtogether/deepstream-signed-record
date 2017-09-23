@@ -246,13 +246,14 @@ exports.default = function (client, name, privateKey) {
                 publicKey: pemPublicKey
               });
 
+              delete data.signature;
               data[key] = value;
-              _context3.next = 17;
+              _context3.next = 18;
               return getSignature(data);
 
-            case 17:
+            case 18:
               data.signature = _context3.sent;
-              _context3.next = 20;
+              _context3.next = 21;
               return new Promise(function (resolve, reject) {
                 record.set(data, function (errorMessage) {
                   if (errorMessage) {
@@ -263,7 +264,7 @@ exports.default = function (client, name, privateKey) {
                 });
               });
 
-            case 20:
+            case 21:
             case 'end':
               return _context3.stop();
           }

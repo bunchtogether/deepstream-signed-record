@@ -86,6 +86,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
     const data = Object.assign({}, remoteValue, defaultValue, {
       publicKey: pemPublicKey,
     });
+    delete data.signature;
     data[key] = value;
     data.signature = await getSignature(data);
     await new Promise((resolve, reject) => {
