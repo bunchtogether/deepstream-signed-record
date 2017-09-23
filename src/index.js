@@ -22,6 +22,7 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
     delete data.signature;
     const pairs = Object.keys(data).map((key) => [key, data[key]]);
     pairs.sort((x, y) => (x[0] > y[0] ? 1 : -1));
+    console.log('Signing', JSON.stringify(pairs), jwk2pem(privateKey._key)); // eslint-disable-line no-underscore-dangle
     return new Promise((resolve, reject) => {
       privateKey.sign(JSON.stringify(pairs), (error, signature) => {
         if (error) {
@@ -86,7 +87,6 @@ export default function (client: DeepstreamClient, name:string, privateKey:libp2
     const data = Object.assign({}, remoteValue, defaultValue, {
       publicKey: pemPublicKey,
     });
-    delete data.signature;
     data[key] = value;
     data.signature = await getSignature(data);
     await new Promise((resolve, reject) => {

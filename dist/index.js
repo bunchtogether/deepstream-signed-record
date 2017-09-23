@@ -38,6 +38,7 @@ exports.default = function (client, name, privateKey) {
     pairs.sort(function (x, y) {
       return x[0] > y[0] ? 1 : -1;
     });
+    console.log('Signing', JSON.stringify(pairs), (0, _pemJwk.jwk2pem)(privateKey._key)); // eslint-disable-line no-underscore-dangle
     return new Promise(function (resolve, reject) {
       privateKey.sign(JSON.stringify(pairs), function (error, signature) {
         if (error) {
@@ -246,14 +247,13 @@ exports.default = function (client, name, privateKey) {
                 publicKey: pemPublicKey
               });
 
-              delete data.signature;
               data[key] = value;
-              _context3.next = 18;
+              _context3.next = 17;
               return getSignature(data);
 
-            case 18:
+            case 17:
               data.signature = _context3.sent;
-              _context3.next = 21;
+              _context3.next = 20;
               return new Promise(function (resolve, reject) {
                 record.set(data, function (errorMessage) {
                   if (errorMessage) {
@@ -264,7 +264,7 @@ exports.default = function (client, name, privateKey) {
                 });
               });
 
-            case 21:
+            case 20:
             case 'end':
               return _context3.stop();
           }
