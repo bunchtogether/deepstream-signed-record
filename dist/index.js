@@ -64,6 +64,13 @@ exports.default = function (client, name, keyPair) {
               throw new Error('Invalid signature for record ' + name);
 
             case 6:
+              Object.keys(callbacks).forEach(function (k) {
+                if (!data[k] && !currentData[k]) {
+                  callbacks[k].forEach(function (callback) {
+                    return callback();
+                  });
+                }
+              });
               Object.keys(currentData).forEach(function (k) {
                 if (!data[k] && callbacks[k]) {
                   callbacks[k].forEach(function (callback) {
@@ -79,61 +86,61 @@ exports.default = function (client, name, keyPair) {
                 }
               });
               currentData = data;
-              _context.next = 32;
+              _context.next = 33;
               break;
 
-            case 11:
-              _context.prev = 11;
+            case 12:
+              _context.prev = 12;
               _context.t0 = _context['catch'](0);
               _iteratorNormalCompletion = true;
               _didIteratorError = false;
               _iteratorError = undefined;
-              _context.prev = 16;
+              _context.prev = 17;
 
               for (_iterator = errbacks[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                 errback = _step.value;
                 // eslint-disable-line no-restricted-syntax
                 errback(_context.t0);
               }
-              _context.next = 24;
+              _context.next = 25;
               break;
 
-            case 20:
-              _context.prev = 20;
-              _context.t1 = _context['catch'](16);
+            case 21:
+              _context.prev = 21;
+              _context.t1 = _context['catch'](17);
               _didIteratorError = true;
               _iteratorError = _context.t1;
 
-            case 24:
-              _context.prev = 24;
+            case 25:
               _context.prev = 25;
+              _context.prev = 26;
 
               if (!_iteratorNormalCompletion && _iterator.return) {
                 _iterator.return();
               }
 
-            case 27:
-              _context.prev = 27;
+            case 28:
+              _context.prev = 28;
 
               if (!_didIteratorError) {
-                _context.next = 30;
+                _context.next = 31;
                 break;
               }
 
               throw _iteratorError;
 
-            case 30:
-              return _context.finish(27);
-
             case 31:
-              return _context.finish(24);
+              return _context.finish(28);
 
             case 32:
+              return _context.finish(25);
+
+            case 33:
             case 'end':
               return _context.stop();
           }
         }
-      }, _callee, _this, [[0, 11], [16, 20, 24, 32], [25,, 27, 31]]);
+      }, _callee, _this, [[0, 12], [17, 21, 25, 33], [26,, 28, 32]]);
     }));
 
     return function (_x2) {

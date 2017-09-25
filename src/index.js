@@ -32,6 +32,11 @@ export default function (client: DeepstreamClient, name:string, keyPair:Object, 
       if (Object.keys(data).length > 0 && signature !== getSignature(data)) {
         throw new Error(`Invalid signature for record ${name}`);
       }
+      Object.keys(callbacks).forEach((k) => {
+        if (!data[k] && !currentData[k]) {
+          callbacks[k].forEach((callback) => callback());
+        }
+      });
       Object.keys(currentData).forEach((k) => {
         if (!data[k] && callbacks[k]) {
           callbacks[k].forEach((callback) => callback());
