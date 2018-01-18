@@ -46,6 +46,34 @@ test('Should sign a record.', async () => {
   await recordB.discard();
 });
 
+test('Should subscribe and unsubscribe.', async () => {
+  const name = uuid.v4();
+  const defaultValue = {
+    [uuid.v4()]: uuid.v4(),
+  };
+  const propertyName = uuid.v4();
+  const propertyValueA = uuid.v4();
+  const propertyValueB = uuid.v4();
+  const recordA = signedRecord(clientA, name, keyPair, defaultValue);
+  const recordB = signedRecord(clientB, name, keyPair, defaultValue);
+  let count = 0;
+  const callback = () => {
+    count += 1;
+  };
+  const errback = (error) => {
+    throw error;
+  };
+  expect(count).toEqual(0);
+  recordB.subscribe(propertyName, callback, errback);
+  await recordA.set(propertyName, propertyValueA);
+  expect(count).toEqual(1);
+  recordB.unsubscribe(propertyName, callback, errback);
+  await recordA.set(propertyName, propertyValueB);
+  expect(count).toEqual(1);
+  await recordA.discard();
+  await recordB.discard();
+});
+
 test('Should sign and add to record.', async () => {
   const name = uuid.v4();
   const defaultValue = {
@@ -88,15 +116,23 @@ test('Should callback once.', async () => {
   const propertyValue = uuid.v4();
   const recordA = signedRecord(clientA, name, keyPair, defaultValue);
   const recordB = signedRecord(clientB, name, keyPair, defaultValue);
-  let count = 0;
+  let beforeSetCount = 0;
+  const beforeSetHandler = () => {
+    beforeSetCount += 1;
+  };
+  recordB.subscribe(propertyName, beforeSetHandler);
+  await Promise.all([recordA.readyPromise, recordB.readyPromise]);
+  recordB.unsubscribe(propertyName, beforeSetHandler);
+  let afterSetCount = 0;
   recordB.subscribe(propertyName, () => {
-    count += 1;
+    afterSetCount += 1;
   });
   await recordA.set(propertyName, propertyValue);
   await recordB.set(propertyName, propertyValue);
   await recordA.set(propertyName, propertyValue);
   await recordB.set(propertyName, propertyValue);
-  expect(count).toEqual(1);
+  expect(beforeSetCount).toEqual(1);
+  expect(afterSetCount).toEqual(1);
   await recordA.discard();
   await recordB.discard();
 });

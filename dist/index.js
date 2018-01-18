@@ -19,7 +19,9 @@ exports.default = function (client, name, keyPair) {
 
   var record = client.record.getRecord(name);
   var readyPromise = new Promise(function (resolve, reject) {
-    record.once('ready', resolve);
+    record.once('ready', function () {
+      return resolve();
+    });
     record.once('error', reject);
   });
   var pemPublicKey = keyPair.exportKey('pkcs1-public-pem');
@@ -147,29 +149,55 @@ exports.default = function (client, name, keyPair) {
       return _ref.apply(this, arguments);
     };
   }(), true);
-  var subscribe = function subscribe(key, callback, errback) {
-    callbacks[key] = callbacks[key] || [];
-    callbacks[key].push(callback);
-    if (errback) {
-      errbacks.add(errback);
-    }
-  };
-  var discard = function () {
-    var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2() {
+  var subscribe = function () {
+    var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(key, callback, errback) {
       return _regenerator2.default.wrap(function _callee2$(_context2) {
         while (1) {
           switch (_context2.prev = _context2.next) {
             case 0:
+              callbacks[key] = callbacks[key] || [];
+              callbacks[key].push(callback);
+              if (errback) {
+                errbacks.add(errback);
+              }
+
+            case 3:
+            case 'end':
+              return _context2.stop();
+          }
+        }
+      }, _callee2, _this);
+    }));
+
+    return function subscribe(_x3, _x4, _x5) {
+      return _ref2.apply(this, arguments);
+    };
+  }();
+  var unsubscribe = function unsubscribe(key, callback, errback) {
+    callbacks[key] = callbacks[key] || [];
+    callbacks[key] = callbacks[key].filter(function (cb) {
+      return cb !== callback;
+    });
+    if (errback) {
+      errbacks.delete(errback);
+    }
+  };
+  var discard = function () {
+    var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3() {
+      return _regenerator2.default.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
               if (!record.isDestroyed) {
-                _context2.next = 2;
+                _context3.next = 2;
                 break;
               }
 
-              return _context2.abrupt('return');
+              return _context3.abrupt('return');
 
             case 2:
               record.unsubscribe();
-              _context2.next = 5;
+              _context3.next = 5;
               return new Promise(function (resolve, reject) {
                 record.once('discard', resolve);
                 record.once('error', reject);
@@ -178,24 +206,24 @@ exports.default = function (client, name, keyPair) {
 
             case 5:
             case 'end':
-              return _context2.stop();
+              return _context3.stop();
           }
         }
-      }, _callee2, _this);
+      }, _callee3, _this);
     }));
 
     return function discard() {
-      return _ref2.apply(this, arguments);
+      return _ref3.apply(this, arguments);
     };
   }();
   var set = function () {
-    var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(key, value) {
+    var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(key, value) {
       var remoteValue, data;
-      return _regenerator2.default.wrap(function _callee3$(_context3) {
+      return _regenerator2.default.wrap(function _callee4$(_context4) {
         while (1) {
-          switch (_context3.prev = _context3.next) {
+          switch (_context4.prev = _context4.next) {
             case 0:
-              _context3.next = 2;
+              _context4.next = 2;
               return readyPromise;
 
             case 2:
@@ -211,7 +239,7 @@ exports.default = function (client, name, keyPair) {
 
               data[key] = value;
               data.signature = getSignature(data);
-              _context3.next = 9;
+              _context4.next = 9;
               return new Promise(function (resolve, reject) {
                 record.set(data, function (errorMessage) {
                   if (errorMessage) {
@@ -224,17 +252,17 @@ exports.default = function (client, name, keyPair) {
 
             case 9:
             case 'end':
-              return _context3.stop();
+              return _context4.stop();
           }
         }
-      }, _callee3, _this);
+      }, _callee4, _this);
     }));
 
-    return function set(_x3, _x4) {
-      return _ref3.apply(this, arguments);
+    return function set(_x6, _x7) {
+      return _ref4.apply(this, arguments);
     };
   }();
-  return { set: set, subscribe: subscribe, discard: discard };
+  return { set: set, subscribe: subscribe, unsubscribe: unsubscribe, discard: discard, readyPromise: readyPromise };
 };
 
 var _deepstream = require('deepstream.io-client-js');

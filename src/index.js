@@ -4,8 +4,8 @@ import DeepstreamClient from 'deepstream.io-client-js';
 
 export default function (client: DeepstreamClient, name:string, keyPair:Object, defaultValue?: Object = {}) {
   const record = client.record.getRecord(name);
-  const readyPromise = new Promise((resolve, reject) => {
-    record.once('ready', resolve);
+  const readyPromise:Promise<void> = new Promise((resolve, reject) => {
+    record.once('ready', () => resolve());
     record.once('error', reject);
   });
   const pemPublicKey = keyPair.exportKey('pkcs1-public-pem');
@@ -54,11 +54,18 @@ export default function (client: DeepstreamClient, name:string, keyPair:Object, 
       }
     }
   }, true);
-  const subscribe = (key: string, callback: Function, errback?: Function) => {
+  const subscribe = async (key: string, callback: Function, errback?: Function) => {
     callbacks[key] = callbacks[key] || [];
     callbacks[key].push(callback);
     if (errback) {
       errbacks.add(errback);
+    }
+  };
+  const unsubscribe = (key: string, callback: Function, errback?: Function) => {
+    callbacks[key] = callbacks[key] || [];
+    callbacks[key] = callbacks[key].filter((cb) => (cb !== callback));
+    if (errback) {
+      errbacks.delete(errback);
     }
   };
   const discard = async () => {
@@ -94,5 +101,5 @@ export default function (client: DeepstreamClient, name:string, keyPair:Object, 
       });
     });
   };
-  return { set, subscribe, discard };
+  return { set, subscribe, unsubscribe, discard, readyPromise };
 }
